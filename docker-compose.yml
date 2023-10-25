@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  analyzerkanji:
+    user: 1000:1000
+    image: analyzerkanji:v1.0
+    container_name: analyzerkanji
+    runtime: nvidia 
+    privileged: true
+    restart: always
+    stdin_open: true
+    # networks_mode: host
+    security_opt:
+      - seccomp:unconfined
+    # shm_size: '300gb'
+    environment:
+      DISPLAY: ${DISPLAY}
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,compat32,utility,graphics,video,display
+      CCACHE_DIR: ccache
+
+    volumes:
+      - ../kaggle_pytorch_docker:/home/dkhai/workspace
+      - ${HOME}/.Xauthority:/home/dkhai/.Xauthority:rw
+    tty: "true"
+    ulimits:
+      memlock: -1
+    build: 
+      context: .
+      shm_size: '2gb'
+      dockerfile: ./Dockerfile
+      args:
+        - VERSION_CUDA=11.8.0
+        - VERSION_PYTORCH=1.11.0
+        - USER_ID=1000
+        - GROUP_ID=1000
+        - USER_NAME=dkhai
+      x-bake:
+        tags:
+          - analyzerkanji:v1.0
+    
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
